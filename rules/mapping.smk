@@ -18,7 +18,7 @@ rule bwa:
         "bwa index {input.ref};"
         "bwa mem -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
         # "bwa mem -A 1 -B 8 -w 20 -T 120 -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
-        "rm {input.ref}.amb {input.ref}.ann {input.ref}.bwt {input.ref}.pac {input.ref}.sa;"
+        #"rm -f {input.ref}.amb {input.ref}.ann {input.ref}.bwt {input.ref}.pac {input.ref}.sa;"
 
 ### fitering the bwa alignment according alignment score (AS) ###
 #grep -v -P 'AS:i:(1[0-1][0-9]|[1-9][0-9]|[0-9])\t' out_mapping/1_FDSW210197737-1r__REF2.sam > ref2.sam

@@ -44,7 +44,7 @@ def parse_args():
     parser.add_argument('--DEPTH_TAB', required=True, type=str, metavar='FILENAME', help="the tab file describe the mapping depth of every base")
     # parser.add_argument('--DEPTH_TAB_E', required=True, type=str, metavar='FILENAME', help="the tab file (end condiction) describe the mapping depth of every base")
     parser.add_argument('--CUTLEN', default=5000, type=int, metavar='DEFAULT 5000', help="the flanking seq length for target catulation part (extracted for model learning)")
-    parser.add_argument('--FIXLEN', type=int, help="seq length you want to drop near the deletion edge location (default is 0)")
+    parser.add_argument('--FIXLEN', type=int, help="flanking seq length you want to drop near the deletion edge location (default is 0)")
     # parser.add_argument('--DROP_ABOVE', default=1000, type=int, metavar='DEFAULT 1000', help="mapping depth above this number will be dropped")
     # parser.add_argument('--DROP_BELOW', default=0, type=int, metavar='DEFAULT 0', help="mapping depth below this number will be dropped")
 
@@ -89,7 +89,7 @@ def get_learning_df(depth_tab, targets, mapping_ref, cutlen, fixlen=False):
             start_loc, end_loc = end_loc, start_loc
         if fixlen:
             print("Hi Xiao i will use the fixlen mode to prepare the data, the fixlen is: " + str(fixlen))
-            masked_df = depth_tab_df.query('(@start_loc + @fixlen) <= `1_index` <= (@end_loc-@fixlen)')
+            masked_df = depth_tab_df.query('(@start_loc) <= `1_index` <= (@end_loc)')
             masked_df = masked_df.assign(target_name=target_name)
             masked_df_append = pd.concat([masked_df_append, masked_df])
             # depth_tab_df = depth_tab_df.query('not (@start_loc + @fixlen) <= `1_index` <= (@end_loc-@fixlen)')
