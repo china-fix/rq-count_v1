@@ -6,6 +6,7 @@ This script is design for caculate the relative mapping rate change between star
 ### 20220512-update modify the linear model, former (block depth)X > (block depth)Y, updated (block depth, block position)X > (block depth)Y
 ### 20220516-update add new machine-learning model to instead the former linear model
 '''
+##old version no longer support
 # import glob
 import os
 import subprocess
