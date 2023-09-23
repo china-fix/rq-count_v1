@@ -5,7 +5,7 @@ rule bwa:
     input:
         read_1 = "out_clean_read/{sample}1.fq.gz",
         read_2 = "out_clean_read/{sample}2.fq.gz",
-        ref = "in/REF/{ref}"
+        ref = "in/REF/{ref}.REF"
     output:
         sam_file = "out_mapping/{sample}_{ref}.sam"
     conda:
@@ -56,20 +56,20 @@ rule samtools:
 
 ### get the mapping coverage ###
 ### get the tab file describe the mapping depth of every base
-rule bedtools:
-    input:
-        sorted_bam_file = "out_mapping/{sample}_{ref}.bam.sorted"
-    output:
-        coverage_count = "report/{sample}_{ref}.tab",
-        tab_file = "report/{sample}_{ref}_depth.tab"
-    conda:
-        os.path.join(
-            relative_dir, "envs/mapping.yaml"
-        )
-        # "../envs/mapping.yaml"
-    shell:
-        "bedtools genomecov -ibam {input.sorted_bam_file} -d > {output.coverage_count};"
-        "sed -i 's/$/\t1/g' {output.coverage_count};"
-        "sed -i '1i reference_seq\t1_index\tcoverage\tcount' {output.coverage_count};"
-        "samtools depth -a {input.sorted_bam_file} > {output.tab_file} "
+#rule bedtools:
+#    input:
+#        sorted_bam_file = "out_mapping/{sample}_{ref}.bam.sorted"
+#    output:
+#        coverage_count = "report/{sample}_{ref}.tab",
+#        tab_file = "report/{sample}_{ref}_depth.tab"
+#    conda:
+#        os.path.join(
+#            relative_dir, "envs/mapping.yaml"
+#        )
+#        # "../envs/mapping.yaml"
+#    shell:
+#        "bedtools genomecov -ibam {input.sorted_bam_file} -d > {output.coverage_count};"
+#        "sed -i 's/$/\t1/g' {output.coverage_count};"
+#        "sed -i '1i reference_seq\t1_index\tcoverage\tcount' {output.coverage_count};"
+#        "samtools depth -a {input.sorted_bam_file} > {output.tab_file} "
 
