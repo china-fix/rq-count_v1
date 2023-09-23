@@ -2,8 +2,10 @@
 
 rule fastp:
     input:
-        read_1 = "in/{sample}1.fq.gz",
-        read_2 = "in/{sample}2.fq.gz",
+        #read_1 = "in/{sample}1.(fq|fastq).gz",
+        #read_2 = "in/{sample}2.(fq|fastq).gz",
+        read_1 = "in/{sample}1."+FQEXTN+".gz",
+        read_2 = "in/{sample}2."+FQEXTN+".gz",
     output:
         read_1 = "out_clean_read/{sample}1.fq.gz",
         read_2 = "out_clean_read/{sample}2.fq.gz",
