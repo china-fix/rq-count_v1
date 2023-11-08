@@ -51,10 +51,10 @@ mkdir -p "$OUT_DIR"
 for name in "$REPORT_DIR"/*.tab; do
     if [ -f "$name" ]; then
         # Extract the filename without the path
-        base_name="${name##*/}"
+        base_name="${name##*/}"_OUT
 
         # Define the output file path
-        output_file="$OUT_DIR/$base_name_OUT"
+        output_file="$OUT_DIR/$base_name"
 
         # Run the Python script with additional options
         echo "Processing $name..."
