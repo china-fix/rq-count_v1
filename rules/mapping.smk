@@ -19,38 +19,15 @@ rule pre_bwa:
         # "bwa mem -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
 
 
-
 ### apply bwa to map the clean reads to referece seqs ###
-rule bwa:
+rule bwa_samtools:
     input:
         read_1 = "out_clean_read/{sample}1.fq.gz",
         read_2 = "out_clean_read/{sample}2.fq.gz",
         # ref = "in/REF/{ref}.REF"
         ref = "out_REF_index/{ref}.REF"
     output:
-        sam_file = "out_mapping/{sample}_{ref}.sam"
-    conda:
-        os.path.join(
-            relative_dir, "envs/mapping.yaml"
-        )
-        # "../envs/mapping.yaml"
-    threads: config["general_config"]["threads_n"]
-    shell:
-        # "bwa index {input.ref};"
-        "bwa mem -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
-        # "bwa mem -A 1 -B 8 -w 20 -T 120 -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
-        #"rm -f {input.ref}.amb {input.ref}.ann {input.ref}.bwt {input.ref}.pac {input.ref}.sa;"
-
-### fitering the bwa alignment according alignment score (AS) ###
-#grep -v -P 'AS:i:(1[0-1][0-9]|[1-9][0-9]|[0-9])\t' out_mapping/1_FDSW210197737-1r__REF2.sam > ref2.sam
-
-
-### change the sam to bam and sorted###
-rule samtools:
-    input:
-        sam_file = "out_mapping/{sample}_{ref}.sam"
-    output:
-        bam_file = "out_mapping/{sample}_{ref}.bam",
+        # bam_file = "out_mapping/{sample}_{ref}.bam",
         sorted_bam_file = "out_mapping/{sample}_{ref}.bam.sorted"
     conda:
         os.path.join(
@@ -59,8 +36,56 @@ rule samtools:
         # "../envs/mapping.yaml"
     threads: config["general_config"]["threads_n"]
     shell:
-        "samtools view -b --threads {threads} {input.sam_file} > {output.bam_file};"
-        "samtools sort -o {output.sorted_bam_file} --threads {threads} {output.bam_file} "
+        # "bwa index {input.ref};"
+        "bwa mem -t {threads} {input.ref} {input.read_1} {input.read_2} | samtools view -b --threads {threads} | samtools sort -o {output.sorted_bam_file} --threads {threads} ;"
+        # "samtools sort -o {output.sorted_bam_file} --threads {threads} {output.bam_file} ;"
+        # "bwa mem -A 1 -B 8 -w 20 -T 120 -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
+        #"rm -f {input.ref}.amb {input.ref}.ann {input.ref}.bwt {input.ref}.pac {input.ref}.sa;"
+
+
+
+
+# ### apply bwa to map the clean reads to referece seqs ###
+# rule bwa:
+#     input:
+#         read_1 = "out_clean_read/{sample}1.fq.gz",
+#         read_2 = "out_clean_read/{sample}2.fq.gz",
+#         # ref = "in/REF/{ref}.REF"
+#         ref = "out_REF_index/{ref}.REF"
+#     output:
+#         sam_file = "out_mapping/{sample}_{ref}.sam"
+#     conda:
+#         os.path.join(
+#             relative_dir, "envs/mapping.yaml"
+#         )
+#         # "../envs/mapping.yaml"
+#     threads: config["general_config"]["threads_n"]
+#     shell:
+#         # "bwa index {input.ref};"
+#         "bwa mem -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
+#         # "bwa mem -A 1 -B 8 -w 20 -T 120 -t {threads} {input.ref} {input.read_1} {input.read_2}  > {output.sam_file};"
+#         #"rm -f {input.ref}.amb {input.ref}.ann {input.ref}.bwt {input.ref}.pac {input.ref}.sa;"
+
+# ### fitering the bwa alignment according alignment score (AS) ###
+# #grep -v -P 'AS:i:(1[0-1][0-9]|[1-9][0-9]|[0-9])\t' out_mapping/1_FDSW210197737-1r__REF2.sam > ref2.sam
+
+
+# ### change the sam to bam and sorted###
+# rule samtools:
+#     input:
+#         sam_file = "out_mapping/{sample}_{ref}.sam"
+#     output:
+#         bam_file = "out_mapping/{sample}_{ref}.bam",
+#         sorted_bam_file = "out_mapping/{sample}_{ref}.bam.sorted"
+#     conda:
+#         os.path.join(
+#             relative_dir, "envs/mapping.yaml"
+#         )
+#         # "../envs/mapping.yaml"
+#     threads: config["general_config"]["threads_n"]
+#     shell:
+#         "samtools view -b --threads {threads} {input.sam_file} > {output.bam_file};"
+#         "samtools sort -o {output.sorted_bam_file} --threads {threads} {output.bam_file} "
 
 # ### get the mapping coverage ###
 # rule bedtools:
