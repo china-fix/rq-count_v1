@@ -1,16 +1,23 @@
 import argparse
 import pandas as pd
 
+def eliminate_outliers(data):
+    mu = data.mean()
+    std = data.std()
+    clean_data = data[(data > mu - 1.645 * std) & (data < mu + 1.645 * std)]
+    return clean_data
+
 def calculate_statistics(input_file, output_file):
     # Read the data from the file into a pandas DataFrame
-    df = pd.read_csv(input_file, sep='\t', header=None, names=["ID", "Column2", "Column3"])
+    df_start = pd.read_csv(input_file, sep='\t', header=None, names=["ID", "Column2", "Column3"])
+    df = eliminate_outliers(df_start["Column3"])
 
     # Calculate the requested statistics
-    mean_value = df["Column3"].mean()
-    median_value = df["Column3"].median()
-    std_deviation = df["Column3"].std()
-    max_value = df["Column3"].max()
-    min_value = df["Column3"].min()
+    mean_value = df.mean()
+    median_value = df.median()
+    std_deviation = df.std()
+    max_value = df.max()
+    min_value = df.min()
     
     # Format the values to two decimal places
     mean_value = "{:.2f}".format(mean_value)
