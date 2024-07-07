@@ -23,6 +23,7 @@ from sklearn.svm import SVR
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, explained_variance_score, mean_absolute_error, mean_absolute_percentage_error, median_absolute_error
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Welcome to use Xiao_Fei_Robot")
     parser.add_argument('--MAPPING_REF', required=True, type=str, metavar='FILENAME', help="The fasta filename you used for bwa mapping reference")
@@ -31,11 +32,12 @@ def parse_args():
     parser.add_argument('--CUTLEN', default=5000, type=int, metavar='DEFAULT 5000', help="The flanking seq length for target calculation (extracted for model learning)")
     parser.add_argument('--CUTLEN_FROM', type=int, help="Starting value for CUTLEN (overrides --CUTLEN if used)")
     parser.add_argument('--CUTLEN_TO', type=int, help="Ending value for CUTLEN (overrides --CUTLEN if used)")
-    parser.add_argument('--CUT_STEP', default=50, type=int, metavar='STEP', help="Step size for CUTLEN range (default: 50)")
+    parser.add_argument('--CUT_STEP', default=50, type=int, metavar='STEP', help="step size for CUTLEN range (default: 50)")
     parser.add_argument('--FIXLEN', type=int, help="Flanking seq length you want to drop near the deletion edge location (default is 0)")
     parser.add_argument('--OUT', default="report", type=str, metavar='FILENAME', help="Output file name, 'report' as default")
     parser.add_argument('--DEV', action='store_const', const=True, metavar='FOR DEVELOPING ONLY', help="For developing and testing only, normal users can ignore this")
     return parser.parse_args()
+
 
 def get_learning_df(depth_tab, targets, mapping_ref, cutlen, fixlen=False):
     depth_tab_df = pd.read_csv(depth_tab, sep='\t', names=["reference", "1_index", "depth"])
@@ -44,8 +46,8 @@ def get_learning_df(depth_tab, targets, mapping_ref, cutlen, fixlen=False):
     xml_obj = io.BytesIO(xml)
     blast_records = NCBIXML.parse(xml_obj)
 
-    masked_dfs = []
-    flanking_dfs = []
+    masked_df_append = pd.DataFrame()
+    flanking_df_append = pd.DataFrame()
 
     for blast_record in blast_records:
         try:
@@ -61,31 +63,29 @@ def get_learning_df(depth_tab, targets, mapping_ref, cutlen, fixlen=False):
             start_loc, end_loc = end_loc, start_loc
         if fixlen:
             masked_df = depth_tab_df.query('(@start_loc) <= `1_index` <= (@end_loc)')
-            masked_df['target_name'] = target_name
-            masked_dfs.append(masked_df)
+            masked_df = masked_df.assign(target_name=target_name)
+            masked_df_append = pd.concat([masked_df_append, masked_df])
             flanking_df = depth_tab_df.query('((@end_loc + @cutlen) >= `1_index` > (@end_loc + @fixlen)) or ((@start_loc - @cutlen) <= `1_index` < (@start_loc - @fixlen))')
-            flanking_df['target_name'] = target_name
-            flanking_dfs.append(flanking_df)
+            flanking_df = flanking_df.assign(target_name=target_name)
+            flanking_df_append = pd.concat([flanking_df_append, flanking_df])
         else:
             masked_df = depth_tab_df.query('@start_loc <= `1_index` <= @end_loc')
-            masked_df['target_name'] = target_name
-            masked_dfs.append(masked_df)
+            masked_df = masked_df.assign(target_name=target_name)
+            masked_df_append = pd.concat([masked_df_append, masked_df])
             flanking_df = depth_tab_df.query('((@end_loc + @cutlen) >= `1_index` > @end_loc) or ((@start_loc - @cutlen) <= `1_index` < @start_loc)')
-            flanking_df['target_name'] = target_name
-            flanking_dfs.append(flanking_df)
+            flanking_df = flanking_df.assign(target_name=target_name)
+            flanking_df_append = pd.concat([flanking_df_append, flanking_df])
 
-    masked_df_append = pd.concat(masked_dfs, ignore_index=True)
-    flanking_df_append = pd.concat(flanking_dfs, ignore_index=True)
-    
-    return depth_tab_df, masked_df_append, flanking_df_append
+    return  masked_df_append, flanking_df_append
+
 
 def get_ML_model(learning_df):
     X = learning_df[["1_index"]].to_numpy(dtype=float)
     y = learning_df["depth"].to_numpy(dtype=float)
-    regr = SVR(kernel="rbf", C=50, gamma=0.1, epsilon=0.1, cache_size=200)  # Reduced cache size
+    regr = SVR(kernel="rbf", C=50, gamma=0.1, epsilon=0.1, cache_size=5000)
     regr.fit(X, y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
-    regr_metrics = SVR(kernel="rbf", C=50, gamma=0.1, epsilon=0.1, cache_size=200)  # Reduced cache size
+    regr_metrics = SVR(kernel="rbf", C=50, gamma=0.1, epsilon=0.1, cache_size=5000)
     regr_metrics.fit(X_train, y_train)
     R2 = r2_score(y_test, regr_metrics.predict(X_test))
     VAR = explained_variance_score(y_test, regr_metrics.predict(X_test))
@@ -99,11 +99,13 @@ def get_ML_model(learning_df):
     print("mean absolute percentage error: ", ABS_PER)
     return regr, ABS, R2, ABS_MEDIAN
 
+
 def elimate_outliters(data):
     mu = data.mean()
     std = data.std()
     clean_data = data[(data > mu - 1.645 * std) & (data < mu + 1.645 * std)]
     return clean_data
+
 
 def ratio_caculate(model, targets_df, mean_abs_er, R2, median_abs_er):
     predict_X = targets_df[["1_index"]].to_numpy(dtype=float)
@@ -130,6 +132,7 @@ def ratio_caculate(model, targets_df, mean_abs_er, R2, median_abs_er):
     df = df.assign(ML_R2=R2)
     return targets_df, df
 
+
 def process_target(name, flanking_df, targets_df):
     try:
         flanking_df_i = flanking_df.query('`target_name` == @name')
@@ -143,10 +146,11 @@ def process_target(name, flanking_df, targets_df):
         print(f"Error processing target {name}: {e}")
         return None, None
 
+
 def main():
     args = parse_args()
-    new_df_list = []
-    new_df_summary_list = []
+    new_df_append = pd.DataFrame()
+    new_df_summary_append = pd.DataFrame()
 
     cutlen_values = [args.CUTLEN]
     if args.CUTLEN_FROM is not None and args.CUTLEN_TO is not None:
@@ -154,7 +158,7 @@ def main():
 
     for cutlen in cutlen_values:
         print(f"Processing with CUTLEN={cutlen}")
-        depth_tab_df, targets_df, flanking_df = get_learning_df(args.DEPTH_TAB, args.TARGETS, args.MAPPING_REF, cutlen, args.FIXLEN)
+        targets_df, flanking_df = get_learning_df(args.DEPTH_TAB, args.TARGETS, args.MAPPING_REF, cutlen, args.FIXLEN)
         process_func = partial(process_target, flanking_df=flanking_df, targets_df=targets_df)
 
         with multiprocessing.Pool() as pool:
@@ -163,14 +167,9 @@ def main():
         for result in results:
             if result is not None:
                 new_df, new_df_summary = result
-                new_df_list.append(new_df)
+                new_df_append = pd.concat([new_df_append, new_df])
                 new_df_summary['CUTLEN'] = cutlen  # Add CUTLEN column
-                new_df_summary_list.append(new_df_summary)
-
-        del depth_tab_df, targets_df, flanking_df
-
-    new_df_append = pd.concat(new_df_list, ignore_index=True)
-    new_df_summary_append = pd.concat(new_df_summary_list, ignore_index=True)
+                new_df_summary_append = pd.concat([new_df_summary_append, new_df_summary])
 
     new_df_summary_append_sub = new_df_summary_append.reset_index()[['target_name', 'target_rate', 'target_rate_c', 'CUTLEN']]
     
@@ -191,6 +190,7 @@ def main():
 
     grouped_df.to_csv(args.OUT + "_summary_cal.csv")
     new_df_summary_append.to_csv(args.OUT + "_summary_full.csv")
+
 
 if __name__ == "__main__":
     main()
