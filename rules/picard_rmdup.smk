@@ -29,7 +29,8 @@ rule picard_rm_dup:
         )
     threads: config["general_config"]["threads_n"]
     shell:
-        "picard MarkDuplicates -I {input.sorted_bam_file} -O {output.sorted_bam_file_rmdup} -M {output.metrict_file} --REMOVE_SEQUENCING_DUPLICATES true"
+        #"picard MarkDuplicates -I {input.sorted_bam_file} -O {output.sorted_bam_file_rmdup} -M {output.metrict_file} --REMOVE_SEQUENCING_DUPLICATES true"
+        "picard MarkDuplicates I={input.sorted_bam_file} O={output.sorted_bam_file_rmdup} M={output.metrict_file} REMOVE_SEQUENCING_DUPLICATES=true"
 
 
 rule view_cov:
