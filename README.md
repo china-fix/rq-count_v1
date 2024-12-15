@@ -34,7 +34,7 @@ rq-count\_v1 is a comprehensive *in silico* workflow designed to simplify the pr
 
 ***
 
-![](workflow_overview.png?raw=true)
+![](pipeline_overview.jpg?raw=true)
 
 * Overview of rq-count\_v1 workflow.
 
