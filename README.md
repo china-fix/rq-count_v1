@@ -131,8 +131,8 @@ Our internal group provided feedback on this method, expressing concerns about t
 
 
 # Citation
-
+Fei X, Yuan Z, Wellner SM, Ma Y and Olsen JE (2024) A sequencing-based method for quantifying gene-deletion mutants of bacteria in the intracellular environment. Front. Microbiol. 15:1487724. doi: 10.3389/fmicb.2024.1487724
 ....
 
 # Acknowledgments
-
+The author(s) declare that financial support was received for the research, authorship, and/or publication of this article. This study was supported by the Danish Independent Research Council (grant 2035-00047B).
